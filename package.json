@@ -1,0 +1,17 @@
+{
+  "name": "racefocus",
+  "version": "1.0.0",
+  "description": "F1-themed Pomodoro timer. Race your friends. Lap times, driver selection, live F1 mini-player.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

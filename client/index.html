@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RaceFocus — F1 Pomodoro Racing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏁</text></svg>">
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<canvas id="fx"></canvas>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-flag">🏁</span>
+    <h1>RACE<span>FOCUS</span></h1>
+  </div>
+  <div class="topbar-right">
+    <div id="livePill" class="live-pill idle" title="F1 live status">
+      <span class="dot"></span><span id="livePillText">F1 OFFLINE</span>
+    </div>
+    <div class="streak" id="streakBadge" title="Day streak">🔥 <b id="streakDays">0</b></div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ DRIVER SELECT ============ -->
+  <section id="driverScreen" class="screen active">
+    <h2 class="section-title">SELECT YOUR DRIVER</h2>
+    <p class="section-sub">Your focus, their livery. Pick who carries you through every lap.</p>
+    <div id="driverGrid" class="driver-grid"></div>
+    <div class="name-row">
+      <input id="playerName" maxlength="14" placeholder="YOUR NAME (e.g. ALEX)" autocomplete="off">
+      <button id="confirmDriver" class="btn btn-primary">ENTER THE PADDOCK →</button>
+    </div>
+  </section>
+
+  <!-- ============ GARAGE (MAIN) ============ -->
+  <section id="garage" class="screen">
+    <div class="garage-layout">
+      <!-- LEFT: timer -->
+      <div class="panel timer-panel">
+        <div class="session-badge" id="sessionBadge">FOCUS LAP 1</div>
+        <div class="track-wrap">
+          <svg id="trackSvg" viewBox="0 0 400 240">
+            <path id="trackPath" d="M 60 190 C 20 120 60 40 140 45 C 200 48 210 90 260 85 C 330 78 385 110 372 160 C 360 210 290 225 220 212 C 160 201 90 240 60 190 Z"
+              fill="none" stroke="#2a2f3a" stroke-width="14" stroke-linecap="round"/>
+            <path id="trackProgress" d="M 60 190 C 20 120 60 40 140 45 C 200 48 210 90 260 85 C 330 78 385 110 372 160 C 360 210 290 225 220 212 C 160 201 90 240 60 190 Z"
+              fill="none" stroke="url(#gradRed)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 9999"/>
+            <path d="M 52 182 L 68 198" stroke="#e10600" stroke-width="5"/>
+            <defs><linearGradient id="gradRed"><stop offset="0%" stop-color="#e10600"/><stop offset="100%" stop-color="#ff7a18"/></linearGradient></defs>
+            <g id="carMe"><circle r="7" fill="#e10600" stroke="#fff" stroke-width="2"/><circle r="2.5" fill="#fff"/></g>
+            <g id="carGhost"><circle r="5" fill="#3ec6ff" opacity="0.55"/></g>
+          </svg>
+          <div class="time-display" id="timeDisplay">25:00</div>
+          <div class="phase-label" id="phaseLabel">LIGHTS OUT IN…</div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-primary big" id="btnStart">START ENGINE</button>
+          <button class="btn btn-ghost" id="btnPause">PIT STOP</button>
+          <button class="btn btn-ghost" id="btnReset">RESET</button>
+        </div>
+        <div class="settings-row">
+          <label>FOCUS <input type="number" id="setFocus" value="25" min="1" max="120"> min</label>
+          <label>BREAK <input type="number" id="setBreak" value="5" min="1" max="60"> min</label>
+          <label>RACE LAPS <input type="number" id="setLaps" value="4" min="1" max="12"></label>
+        </div>
+        <div class="lap-strip" id="lapStrip"></div>
+      </div>
+
+      <!-- RIGHT: race + stats -->
+      <div class="side-col">
+        <div class="panel race-panel">
+          <div class="panel-head">
+            <h3>🏆 RACE MODE</h3>
+            <span class="conn-dot" id="connDot"></span>
+          </div>
+          <div id="raceLobby">
+            <div class="race-btns">
+              <button class="btn btn-primary" id="btnCreate">CREATE RACE</button>
+              <div class="join-row">
+                <input id="joinCode" maxlength="5" placeholder="CODE" autocomplete="off">
+                <button class="btn btn-ghost" id="btnJoin">JOIN</button>
+              </div>
+            </div>
+            <div class="race-modes">
+              <label class="mode"><input type="radio" name="mode" value="sprint"><span>⚡ SPRINT<em>3 × 5 min laps</em></span></label>
+              <label class="mode"><input type="radio" name="mode" value="gp" checked><span>🏁 GRAND PRIX<em>4 × 25 min laps</em></span></label>
+            </div>
+          </div>
+          <div id="raceRoom" class="hidden">
+            <div class="room-code">ROOM <b id="roomCode">-----</b> <button class="btn-mini" id="btnCopyCode">COPY</button></div>
+            <div id="roomPlayers" class="room-players"></div>
+            <div class="race-actions">
+              <button class="btn btn-primary" id="btnRaceStart">START RACE</button>
+              <button class="btn btn-ghost hidden" id="btnRaceReset">BACK TO LOBBY</button>
+              <button class="btn btn-ghost" id="btnLeaveRoom">LEAVE</button>
+            </div>
+          </div>
+          <div id="raceError" class="race-error"></div>
+        </div>
+
+        <div class="panel stats-panel">
+          <div class="panel-head"><h3>📊 SEASON STATS</h3><span id="todayFocus" class="today-focus">0m today</span></div>
+          <div class="stat-cards">
+            <div class="stat-card"><b id="statLaps">0</b><span>LAPS</span></div>
+            <div class="stat-card"><b id="statRaces">0</b><span>RACES</span></div>
+            <div class="stat-card"><b id="statWins">0</b><span>WINS</span></div>
+            <div class="stat-card"><b id="statStreak">0</b><span>DAY 🔥</span></div>
+          </div>
+          <canvas id="weekChart" width="520" height="170"></canvas>
+          <div class="fastest-lap" id="fastestLap">FASTEST LAP: —</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ LIVE F1 MINI PLAYER ============ -->
+<div id="miniPlayer" class="mini-player collapsed">
+  <button class="mp-toggle" id="mpToggle">🏎️ F1</button>
+  <div class="mp-body">
+    <div class="mp-title" id="mpTitle">FORMULA 1</div>
+    <div class="mp-countdown" id="mpCountdown"></div>
+    <table class="mp-table" id="mpTable"></table>
+    <div class="mp-foot" id="mpFoot">Data: OpenF1</div>
+  </div>
+</div>
+
+<!-- ============ PODIUM MODAL ============ -->
+<div id="podiumModal" class="modal hidden">
+  <div class="podium">
+    <h2 id="podiumTitle">🏁 CHEQUERED FLAG 🏁</h2>
+    <div class="podium-stand">
+      <div class="p-slot second"><div class="p-driver" id="p2"></div><div class="p-box">P2</div></div>
+      <div class="p-slot first"><div class="p-driver" id="p1"></div><div class="p-box">P1</div></div>
+      <div class="p-slot third"><div class="p-driver" id="p3"></div><div class="p-box">P3</div></div>
+    </div>
+    <div id="podiumTimes" class="podium-times"></div>
+    <button class="btn btn-primary" id="btnClosePodium">BACK TO GARAGE</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/live.js"></script>
+<script src="js/race.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
